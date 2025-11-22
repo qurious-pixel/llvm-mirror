@@ -7,10 +7,23 @@ on:
 
 jobs:
   build_win32:
-    runs-on: windows-2025
-    timeout-minutes: 0
     env:
       LLVMVER: 21.1.6
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - crt: "MT"
+            MSVC_RUNTIME: "MultiThreaded"
+            name: llvmlibs_mt
+          - crt: "MD"
+            MSVC_RUNTIME: "MultiThreadedDLL"
+            name: llvmlibs_md
+            RT: "compiler-rt"
+            projects: "clang;clang-tools-extra"
+    runs-on: windows-2025
+    timeout-minutes: 0
+    name: LLVM ${{ env.LLVMVER }} ${{ matrix.crt }} 
     steps:   
     - name: Configure LLVM
       shell: powershell
@@ -18,7 +31,13 @@ jobs:
         git clone -b llvmorg-${{ env.LLVMVER }} --depth 1 https://github.com/llvm/llvm-project.git
         mkdir llvm_build
         cd llvm_build
-        cmake -G "Visual Studio 17 2022" ../llvm-project/llvm -Thost=x64 -DLLVM_TARGETS_TO_BUILD="X86" -DLLVM_DEFAULT_TARGET_TRIPLE:STRING=x86_64-pc-windows-msvc -DLLVM_HOST_TRIPLE:STRING=x86_64-pc-windows-msvc -DCMAKE_BUILD_TYPE=Release -DLLVM_BUILD_RUNTIME=OFF -DLLVM_BUILD_TOOLS=OFF -DLLVM_INCLUDE_DOCS=OFF -DLLVM_INCLUDE_EXAMPLES=OFF -DLLVM_INCLUDE_TESTS=OFF -DLLVM_INCLUDE_BENCHMARKS=OFF -DLLVM_INCLUDE_UTILS=OFF -DLLVM_USE_INTEL_JITEVENTS=ON -DLLVM_ENABLE_Z3_SOLVER=OFF -DCMAKE_SYSTEM_VERSION=6.1 -DCMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION=10.0 -DLLVM_USE_CRT_DEBUG=MTd -DLLVM_USE_CRT_RELEASE=MT -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded
+        cmake -G "Visual Studio 17 2022" ../llvm-project/llvm -Thost=x64 -DLLVM_TARGETS_TO_BUILD="X86" `
+        -DLLVM_DEFAULT_TARGET_TRIPLE:STRING=x86_64-pc-windows-msvc -DLLVM_HOST_TRIPLE:STRING=x86_64-pc-windows-msvc `
+        -DCMAKE_BUILD_TYPE=Release -DLLVM_BUILD_RUNTIME=OFF -DLLVM_BUILD_TOOLS=OFF -DLLVM_INCLUDE_DOCS=OFF `
+        -DLLVM_INCLUDE_EXAMPLES=OFF -DLLVM_INCLUDE_TESTS=OFF -DLLVM_INCLUDE_BENCHMARKS=OFF -DLLVM_INCLUDE_UTILS=OFF `
+        -DLLVM_USE_INTEL_JITEVENTS=ON -DLLVM_ENABLE_Z3_SOLVER=OFF -DCMAKE_SYSTEM_VERSION=6.1 -DCMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION=10.0 `
+        -DLLVM_USE_CRT_DEBUG=${{ matrix.crt }}d -DLLVM_USE_CRT_RELEASE=${{ matrix.crt }} -DCMAKE_MSVC_RUNTIME_LIBRARY=${{ matrix.MSVC_RUNTIME }} `
+        -DLLVM_ENABLE_RUNTIMES="${{ matrix.RT }}" -DLLVM_ENABLE_PROJECTS="${{ matrix.projects }}"
     
     - name: Build LLVM
       shell: powershell
@@ -53,18 +72,18 @@ jobs:
         xcopy  "..\..\..\llvm_build\include" ".\include" /E /Y
         xcopy  "..\..\..\llvm_build\lib\cmake" ".\lib\cmake" /E /Y
         cd ..\
-        7z a -t7z -m0=lzma2 -mx=9 -aoa -r "llvmlibs_mt.7z" *
+        7z a -t7z -m0=lzma2 -mx=9 -aoa -r "${{ matrix.name }}.7z" *
     
     - name: Generate sha256
       shell: bash
       run: |
         cd llvm_out/build
-        sha256sum llvmlibs_mt.7z | awk '{ print $1 }' > llvmlibs_mt.7z.sha256
+        sha256sum ${{ matrix.name }}.7z | awk '{ print $1 }' > ${{ matrix.name }}.7z.sha256
     
     - name: Create or update GitHub release and upload assets
-      if: github.ref == 'refs/heads/master' && success()
+      #if: github.ref == 'refs/heads/master' && success()
       uses: softprops/action-gh-release@v1
       with:
-        files: llvm_out/build/llvmlibs_mt.*
+        files: llvm_out/build/${{ matrix.name }}.*
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

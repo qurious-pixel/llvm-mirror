@@ -3,6 +3,8 @@ name: Win32 Build
 on:
   push:
     #branches: [ master ]
+    tags:
+    - '*'
   workflow_dispatch:
 env:
   LLVMVER: 21.1.6

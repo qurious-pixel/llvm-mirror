@@ -18,7 +18,7 @@ jobs:
         touch llvm_out/build/llvmlibs_mt.123
                 
     - name: Create or update GitHub release and upload assets
-      if: github.ref == 'refs/heads/master' && success()
+      #if: github.ref == 'refs/heads/master' && success()
       uses: softprops/action-gh-release@v1
       with:
         files: llvm_out/build/llvmlibs_mt.*

@@ -2,16 +2,21 @@ name: Win32 Build
 
 on:
   push:
-    #branches: [ master ]
-    #tags:
-    #- '*'
   workflow_dispatch:
 env:
   LLVMVER: 21.1.6
 jobs:
   build_win32:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: llvmlibs_mt
+          - name: llvmlibs_md
+
     runs-on: windows-2025
     timeout-minutes: 0
+    name: LLVM ${{ matrix.name }} 
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -22,22 +27,11 @@ jobs:
       shell: bash
       run: |
         mkdir -p llvm_out/build/
-        echo " this is my file " > llvm_out/build/llvmlibs_mt.123.txt
-
-    #- name: Automatic Releases
-    #  id: create_release
-    #  uses: actions/create-release@v1
-    #  with:
-    #    tag_name: ${{ env.LLVMVER }}
-    #  env:
-    #    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          
+        echo " this is my file " > llvm_out/build/${{ matrix.name }}.123.txt
+         
     - name: Create or update GitHub release and upload assets
       #if: github.ref == 'refs/heads/master' && success()
-      run: gh release create "${{ env.LLVMVER }}" llvm_out/build/llvmlibs_mt.* --title "Release ${{ env.LLVMVER }}"
+      run: gh release create "tag-${{ env.LLVMVER }}" llvm_out/build/${{ matrix.name }}.* --title "Test ${{ env.LLVMVER }}"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    #- name: Configure LLVM
-    #  shell: bash
-    #  run: go install github.com/tcnksm/ghr@latest

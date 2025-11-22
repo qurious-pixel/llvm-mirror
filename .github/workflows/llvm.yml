@@ -29,10 +29,6 @@ jobs:
           
     - name: Create or update GitHub release and upload assets
       #if: github.ref == 'refs/heads/master' && success()
-      uses: softprops/action-gh-release@v1
-      with:
-        files: llvm_out/build/llvmlibs_mt.*
-        discussion_category_name: Release
-        tag_name: ${{ env.LLVMVER }}
+      run: gh release create "${{ env.LLVMVER }}" llvm_out/build/llvmlibs_mt.* --title "Release ${{ env.LLVMVER }}"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

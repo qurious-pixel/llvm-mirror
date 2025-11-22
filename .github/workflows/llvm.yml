@@ -23,12 +23,12 @@ jobs:
             projects: "clang;clang-tools-extra"
     runs-on: windows-2025
     timeout-minutes: 0
-    name: LLVM $env:LLVMVER ${{ matrix.crt }} 
+    name: LLVM ${{ env.LLVMVER }} ${{ matrix.crt }} 
     steps:   
     - name: Configure LLVM
       shell: powershell
       run: |
-        git clone -b llvmorg-$env:LLVMVER --depth 1 https://github.com/llvm/llvm-project.git
+        git clone -b llvmorg-${{ env.LLVMVER }} --depth 1 https://github.com/llvm/llvm-project.git
         mkdir llvm_build
         cd llvm_build
         cmake -G "Visual Studio 17 2022" ../llvm-project/llvm -Thost=x64 -DLLVM_TARGETS_TO_BUILD="X86" `

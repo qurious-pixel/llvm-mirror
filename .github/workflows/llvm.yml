@@ -22,7 +22,7 @@ jobs:
       shell: bash
       run: |
         mkdir -p llvm_out/build/
-        touch llvm_out/build/llvmlibs_mt.123.txt
+        cp CMakeLists.txt llvm_out/build/llvmlibs_mt.123.txt
 
     #- name: Automatic Releases
     #  id: create_release
@@ -37,3 +37,7 @@ jobs:
       run: gh release create "${{ env.LLVMVER }}" llvm_out/build/llvmlibs_mt.* --title "Release ${{ env.LLVMVER }}"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Configure LLVM
+      shell: bash
+      run: go install github.com/tcnksm/ghr@latest

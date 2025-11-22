@@ -28,10 +28,29 @@ jobs:
       run: |
         mkdir -p llvm_out/build/
         echo " this is my file " > llvm_out/build/${{ matrix.name }}.123.txt
-         
+        
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ matrix.name }}
+        path: llvm_out/build/${{ matrix.name }}.*
+        
+  deploy-llvm:
+    name: deploy llvm
+    runs-on: windows-2025
+    needs: build_win32
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    
+    - uses: actions/download-artifact@v4
+      with:
+        name: llvmlibs_*
+        path: bin
+        
     - name: Create or update GitHub release and upload assets
       #if: github.ref == 'refs/heads/master' && success()
-      run: gh release create "tag-${{ env.LLVMVER }}" llvm_out/build/${{ matrix.name }}.* --title "Test ${{ env.LLVMVER }}"
+      run: gh release create "tag-${{ env.LLVMVER }}" bin/* --title "Test ${{ env.LLVMVER }}"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

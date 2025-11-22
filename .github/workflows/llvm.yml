@@ -33,5 +33,6 @@ jobs:
       with:
         files: llvm_out/build/llvmlibs_mt.*
         discussion_category_name: Release
+        tag_name: ${{ env.LLVMVER }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

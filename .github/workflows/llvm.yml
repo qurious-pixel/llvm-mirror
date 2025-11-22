@@ -5,7 +5,7 @@ on:
     branches: [ master ]
   workflow_dispatch:
 env:
-  LLVMVER: "19.1.7"
+  LLVMVER: "21.1.6"
 
 jobs:
   build_win32:
@@ -24,7 +24,12 @@ jobs:
     runs-on: windows-2025
     timeout-minutes: 0
     name: LLVM ${{ matrix.crt }} 
-    steps:   
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 1
+        
     - name: Configure LLVM
       shell: powershell
       run: |
@@ -37,7 +42,7 @@ jobs:
         -DLLVM_INCLUDE_EXAMPLES=OFF -DLLVM_INCLUDE_TESTS=OFF -DLLVM_INCLUDE_BENCHMARKS=OFF -DLLVM_INCLUDE_UTILS=OFF `
         -DLLVM_USE_INTEL_JITEVENTS=ON -DLLVM_ENABLE_Z3_SOLVER=OFF -DCMAKE_SYSTEM_VERSION=6.1 -DCMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION=10.0 `
         -DLLVM_USE_CRT_DEBUG=${{ matrix.crt }}d -DLLVM_USE_CRT_RELEASE=${{ matrix.crt }} -DCMAKE_MSVC_RUNTIME_LIBRARY=${{ matrix.MSVC_RUNTIME }} `
-        -DLLVM_ENABLE_RUNTIMES="${{ matrix.RT }}" -DLLVM_ENABLE_PROJECTS="${{ matrix.projects }}"
+        -DLLVM_ENABLE_RUNTIMES="${{ matrix.RT }}" -DLLVM_ENABLE_PROJECTS="${{ matrix.projects }}" -DLLVM_CMAKE_DIR="lib/cmake/llvm"
     
     - name: Build LLVM
       shell: powershell
@@ -79,11 +84,24 @@ jobs:
       run: |
         cd llvm_out/build
         sha256sum ${{ matrix.name }}.7z | awk '{ print $1 }' > ${{ matrix.name }}.7z.sha256
-    
+
+  deploy-llvm:
+    name: deploy llvm
+    runs-on: windows-2025
+    needs: build_win32
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 1
+        
+    - uses: actions/download-artifact@v4
+      with:
+        merge-multiple: true
+        path: bin
+        
     - name: Create or update GitHub release and upload assets
       #if: github.ref == 'refs/heads/master' && success()
-      uses: softprops/action-gh-release@v1
-      with:
-        files: llvm_out/build/${{ matrix.name }}.*
+      run: gh release create "ci-${{ env.LLVMVER }}" bin/* --title "Release ci-${{ env.LLVMVER }}"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

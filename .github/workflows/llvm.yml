@@ -32,6 +32,6 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         files: llvm_out/build/llvmlibs_mt.*
-        #tag_name: ${{ env.LLVMVER }}
+        discussion_category_name: Release
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

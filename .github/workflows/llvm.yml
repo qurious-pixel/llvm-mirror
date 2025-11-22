@@ -4,14 +4,19 @@ on:
   push:
     branches: [ master ]
   workflow_dispatch:
+env:
+  LLVMVER: 21.1.6
 
 jobs:
   build_win32:
     runs-on: windows-2025
     timeout-minutes: 0
-    env:
-      LLVMVER: 21.1.6
-    steps:   
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 1
+        
     - name: Configure LLVM
       shell: powershell
       run: |
@@ -63,8 +68,6 @@ jobs:
     
     - name: Create or update GitHub release and upload assets
       if: github.ref == 'refs/heads/master' && success()
-      uses: softprops/action-gh-release@v1
-      with:
-        files: llvm_out/build/llvmlibs_mt.*
+      run: gh release create "${{ env.LLVMVER }}" llvm_out/build/llvmlibs_mt.* --title "Release ${{ env.LLVMVER }}"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

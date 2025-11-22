@@ -23,7 +23,7 @@ jobs:
             projects: "clang;clang-tools-extra"
     runs-on: windows-2025
     timeout-minutes: 0
-    name: LLVM ${{ env.LLVMVER }} ${{ matrix.crt }} 
+    name: LLVM ${{ env:LLVMVER }} ${{ matrix.crt }} 
     steps:   
     - name: Configure LLVM
       shell: powershell

@@ -20,7 +20,7 @@ jobs:
             MSVC_RUNTIME: "MultiThreadedDLL"
             name: llvmlibs_md
             RT: "compiler-rt"
-            projects: "clang;compiler-rt"
+            projects: "clang;lld;compiler-rt"
     runs-on: windows-2025
     timeout-minutes: 0
     name: LLVM ${{ matrix.crt }} 
